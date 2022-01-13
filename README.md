@@ -51,3 +51,44 @@ stream() to parallelStream() */
     }
 
 ```
+
+![](img/1_.png)
+
+## Getting started with streams
+
+> **Stream** is a sequence of element from a source (File, IO, network, or collection, ..) that support data processing operation.
+
+- **Characteristic** of a stream:
+    1. Sequence of data
+    2. Source
+    3. Data processing operation
+    4. Pipe line
+    5. Internal iterator.
+
+
+## Stream vs collections:
+- One big different between stream and collections is when they are computed, collection is an in-memory data structure that hold values meanwhile a stream is an sequence of data coming from a source. Collection is eager computed while stream is computed on demand. 
+
+- As an analogy, we can think of collection is a list of movie frame store in DVD, any frame is store upfront and user can select any frame, meanwhile a stream is a sort of video loading from internet, only a few frame is load (and a few more is buffer) at particular time.
+
+![](img/2_.png)
+
+- Stream also have some characteristic such as:
+    1. transversal only one.
+    ```java
+    Stream<Animal> stream = animals.stream();
+        stream.forEach(System.out::println);
+        stream.forEach(System.out::println);
+        
+        
+    Exception in thread "main" java.lang.IllegalStateException: stream has already been operated upon or closed
+	at java.base/java.util.stream.AbstractPipeline.sourceStageSpliterator(AbstractPipeline.java:279)
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:658)
+	at stream.Intro.main(Intro.java:60)
+    ```
+    
+    2. External vs internal iteration
+    
+![](img/3_.png)
+    
+## Stream operation:
