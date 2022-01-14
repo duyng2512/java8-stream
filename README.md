@@ -253,3 +253,86 @@ public static void main(String[] args) throws InterruptedException {
 ```
 
 ### Collecting data with streams
+```java
+// Summarize
+Comparator<Transaction> comparator = Comparator.comparing(Transaction::getAmount);
+Optional<Transaction> mostAmount = list.stream().collect(Collectors.maxBy(comparator));
+
+double average = list.stream().collect(Collectors.averagingDouble(Transaction::getAmount));
+String allTradeName = list.stream().map(Transaction::getTraderName).collect(Collectors.joining());
+
+Map<String, List<Transaction>> transByCities = list.stream()                                   
+                                                    .collect(Collectors.groupingBy(Transaction::getOriginLocation));
+
+Map<Boolean, List<Transaction>> transByAmount = list.stream().collect(Collectors.partitioningBy(p -> 
+                                                             p.getAmount() > 5000));
+```
+
+### Parallel data processing and performance
+
+- Best practice of using parallel:
+    1. Avoid using iterate
+    2. Associativity: expect results to come without following any order
+    3. Lambda expressions should be stateless
+    4. Avoid the modification of the streams' elements
+    5. Lambda expressions should not emit side effects
+    6. Only use parallelism when the number of elements is very huge
+    7. Watch out for boxing. Automatic boxing and unboxing operations can dramatically hurt performance.
+    8. Some operation such as **findAny** is better for parallel than **findFirst**
+
+```java
+public static void testParallel(){
+        System.out.println("Available Processors: " + Runtime.getRuntime().availableProcessors());
+        System.out.println("Int parallel :" + IntStream.iterate(1, i -> i + 1)
+                                                     .limit(100)
+                                                     .parallel()
+                                                     .reduce(0, Integer::sum));
+    }
+
+    public static void testPerformance(){
+        Function<Integer, Integer> forLoop = integer -> {
+            int sum = 0;
+            for (int i = 0; i < integer; i++){
+                sum += i;
+            }
+            return sum;
+        };
+
+        Function<Integer, Integer> streamSequential = integer -> IntStream.iterate(1, n -> n + 1)
+                                                                      .limit(integer)
+                                                                      .reduce(0, Integer::sum);
+
+        Function<Integer, Integer> streamParallel = integer -> IntStream.iterate(1, n -> n + 1)
+                                                                    .limit(integer)
+                                                                    .parallel()
+                                                                    .reduce(0, Integer::sum);
+
+        Function<Integer, Integer> streamParallelOpt = integer -> IntStream.rangeClosed(1, integer)
+                                                                           .parallel()
+                                                                           .reduce(0, Integer::sum);
+
+        performance(forLoop, 100_000_000, "For loop");
+        performance(streamSequential, 100_000_000, "Stream Sequential");
+        performance(streamParallel, 100_000_000, "Stream Parallel");
+        performance(streamParallelOpt, 100_000_000, "Stream Parallel Opt");
+    }
+
+    public static void performance(Function<Integer, Integer> func, int value, String testName){
+        System.out.println(testName + " start...");
+        long fastest = Long.MAX_VALUE;
+        for (int i = 0 ; i < 5; i++){
+            long start = System.nanoTime();
+            func.apply(value);
+            long duration = (System.nanoTime() - start) / 1_000_000;
+            System.out.println("Time [" + i + "], duration :" + duration + " ms" );
+            if (fastest > duration) fastest = duration;
+        }
+        System.out.println("Fastest run :" + fastest + " ms");
+        System.out.println("-------------");
+    }
+```
+
+### The fork/join framework:
+- The fork/join framework was designed to recursively split a parallelizable task into smaller tasks and then combine the results of each subtask to produce the overall result. 
+
+- It’s an implementation of the **ExecutorService** interface, which distributes those subtasks to worker threads in a thread pool, called **ForkJoinPool**.
